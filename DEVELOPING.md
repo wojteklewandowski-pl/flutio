@@ -1,4 +1,4 @@
-# Flet – dokumentacja dla programisty
+# Flutio – dokumentacja dla programisty
 
 ## Stos technologiczny i decyzje
 
@@ -172,8 +172,16 @@ zapamiętywane jako ostatnio wybrany utwór.
 
 ## Wdrożenie
 
-`npm run build` daje statyczny katalog `dist/` ze ścieżkami względnymi (`base: './'`). Można go
-wrzucić do dowolnego katalogu na serwerze https. Po zmianach w `public/sw.js` podbij
+**GitHub Pages:** https://wojteklewandowski-pl.github.io/flutio/
+
+Workflow `.github/workflows/pages.yml` uruchamia się przy każdym pushu na `main` (lub ręcznie:
+zakładka Actions → „GitHub Pages” → Run workflow). Kroki: `npm ci` → `npm test` → `npm run build`
+→ publikacja `dist/`. Gdy testy nie przejdą, nic się nie publikuje.
+Wymagania po stronie GitHuba (jednorazowo): Settings → Pages → Source: **GitHub Actions**.
+Repozytorium musi być publiczne, chyba że konto ma plan płatny.
+
+`npm run build` daje statyczny katalog `dist/` ze ścieżkami względnymi (`base: './'`). Działa więc
+pod `/flutio/` na GitHub Pages i w dowolnym innym katalogu na serwerze https. Po zmianach w `public/sw.js` podbij
 `CACHE_VERSION`, żeby telefony porzuciły starą pamięć podręczną.
 
 ## Ograniczenia i pomysły na dalszy rozwój

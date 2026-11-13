@@ -1,4 +1,4 @@
-# Flet – nauka gry na flecie prostym
+# Flutio – nauka gry na flecie prostym
 
 Aplikacja w przeglądarce (komputer i telefon) do nauki melodii na **flecie prostym sopranowym (C)**:
 
@@ -13,7 +13,26 @@ Aplikacja w przeglądarce (komputer i telefon) do nauki melodii na **flecie pros
 
 Chwyty pochodzą z tabeli w podręczniku („Tabela chwytów na flet”, s. 190), od c¹ do c³.
 
-## Uruchomienie
+## Wersja online
+
+**https://wojteklewandowski-pl.github.io/flutio/**
+
+Nic nie trzeba instalować. Otwórz adres w przeglądarce na komputerze albo telefonie.
+
+**Na telefonie jako aplikacja:**
+1. Otwórz adres w Chrome (Android) lub Safari (iPhone).
+2. Chrome: menu ⋮ → **„Dodaj do ekranu głównego”** / „Zainstaluj aplikację”.
+   Safari: przycisk **Udostępnij** → **„Do ekranu początkowego”**.
+3. Ikona Flutio pojawi się na ekranie głównym i aplikacja otworzy się na pełnym ekranie.
+   Po pierwszym odtworzeniu melodii działa też **bez internetu**.
+
+**Mikrofon** (🎤 Ćwicz z mikrofonem) działa od razu, bo strona jest na https. Przy pierwszym
+użyciu przeglądarka zapyta o zgodę.
+
+Nowa wersja publikuje się sama po każdym `git push` na gałąź `main` (GitHub Actions, ok. 1–2 min).
+Zainstalowana aplikacja pobierze ją przy następnym uruchomieniu z internetem.
+
+## Uruchomienie lokalne (dla programisty)
 
 Wymagany Node.js 20+ (testowane na 22).
 
@@ -38,16 +57,13 @@ npm run dev:https   # https://192.168.1.20:5173
 Telefon ostrzeże o „niezaufanym certyfikacie”. To normalne dla certyfikatu domowego:
 wybierz „Zaawansowane → Przejdź do strony”. Na komputerze (`localhost`) mikrofon działa bez tego.
 
-Żeby **zainstalować aplikację na ekranie głównym** i używać jej **offline**, potrzebny jest
-adres `https://`, bo tego wymagają przeglądarki. Zbuduj wersję produkcyjną i wrzuć katalog `dist/`
-na dowolny hosting statyczny, np. GitHub Pages, Netlify albo Cloudflare Pages:
+Instalacja na ekranie głównym i tryb offline wymagają `https://`, więc do tego służy wersja online.
+Wersję produkcyjną można też zbudować i obejrzeć lokalnie:
 
 ```bash
 npm run build      # wynik w dist/
 npm run preview    # podgląd zbudowanej wersji: http://localhost:4173
 ```
-
-Potem w przeglądarce telefonu: Chrome: menu ⋮ → „Dodaj do ekranu głównego”; Safari: Udostępnij → „Do ekranu początkowego”.
 
 > **Dźwięk:** przy pierwszym odtworzeniu pobierane są próbki brzmienia fletu
 > (pliki MP3 z `paulrosen.github.io`). Potrzebny jest więc wtedy internet. W wersji zainstalowanej

@@ -7,8 +7,26 @@
 import type { Song } from './songs';
 import type { FingeringSystem } from './fingerings';
 
-const SONGS_KEY = 'flet.userSongs.v1';
-const SETTINGS_KEY = 'flet.settings.v1';
+const SONGS_KEY = 'flutio.userSongs.v1';
+const SETTINGS_KEY = 'flutio.settings.v1';
+
+/** Klucze sprzed zmiany nazwy aplikacji (Flet → Flutio) – przenoszone przy pierwszym uruchomieniu. */
+const LEGACY_KEYS: Readonly<Record<string, string>> = {
+  [SONGS_KEY]: 'flet.userSongs.v1',
+  [SETTINGS_KEY]: 'flet.settings.v1',
+};
+
+function migrateLegacy(key: string): void {
+  const old = LEGACY_KEYS[key];
+  if (!old) return;
+  try {
+    const value = localStorage.getItem(old);
+    if (value !== null && localStorage.getItem(key) === null) localStorage.setItem(key, value);
+    if (value !== null) localStorage.removeItem(old);
+  } catch {
+    /* brak dostępu do localStorage – nic do przeniesienia */
+  }
+}
 
 export interface Settings {
   songId: string;
@@ -29,6 +47,7 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 function read<T>(key: string): T | undefined {
+  migrateLegacy(key);
   try {
     const raw = localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : undefined;

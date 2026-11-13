@@ -1,5 +1,5 @@
 {
-  "name": "flet",
+  "name": "flutio",
   "version": "1.0.0",
   "description": "Nauka gry na flecie prostym: nuty, odtwarzanie i chwyt pod każdą nutą",
   "scripts": {
@@ -10,7 +10,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc",
     "dev:https": "HTTPS=1 vite",
-    "cert": "mkdir -p .cert && openssl req -x509 -newkey rsa:2048 -nodes -days 825 -subj /CN=flet-dev -keyout .cert/key.pem -out .cert/cert.pem"
+    "cert": "mkdir -p .cert && openssl req -x509 -newkey rsa:2048 -nodes -days 825 -subj /CN=flutio-dev -keyout .cert/key.pem -out .cert/cert.pem"
   },
   "keywords": [],
   "author": "",

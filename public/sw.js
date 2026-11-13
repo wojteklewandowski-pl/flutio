@@ -5,7 +5,7 @@
  * Działa tylko przez https:// albo http://localhost (wymóg przeglądarek).
  * Po zmianie strategii podbij CACHE_VERSION, żeby stare dane zostały usunięte.
  */
-const CACHE_VERSION = 'flet-v1';
+const CACHE_VERSION = 'flutio-v1';
 const SOUNDFONT_HOST = 'paulrosen.github.io';
 
 self.addEventListener('install', (event) => {
