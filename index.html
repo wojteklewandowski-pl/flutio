@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f4e9c" />
+    <meta name="description" content="Nauka gry na flecie prostym: nuty, odtwarzanie i chwyt pod każdą nutą." />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <title>Flet – nauka gry</title>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Flet <span>nauka gry na flecie prostym</span></h1>
+    </header>
+
+    <main class="app">
+      <section class="toolbar" aria-label="Wybór utworu">
+        <label class="field grow">
+          <span>Utwór</span>
+          <select id="song-select"></select>
+        </label>
+        <div class="toolbar-buttons">
+          <label class="button" title="Wgraj nuty: ABC (.abc) lub MusicXML (.musicxml, .xml, .mxl)">
+            Wgraj nuty…
+            <input id="file-input" type="file" accept=".abc,.txt,.musicxml,.xml,.mxl" hidden />
+          </label>
+          <button id="delete-song" class="button button--ghost" type="button" hidden>Usuń utwór</button>
+        </div>
+      </section>
+
+      <section class="transport" aria-label="Odtwarzanie">
+        <button id="play" class="button button--primary" type="button" aria-label="Odtwórz">▶ Graj</button>
+        <button id="stop" class="button" type="button" aria-label="Zatrzymaj">■ Stop</button>
+        <label class="field tempo">
+          <span>Tempo <output id="tempo-out">100%</output></span>
+          <input id="tempo" type="range" min="0.25" max="1.5" step="0.05" value="1" />
+        </label>
+        <label class="check"><input id="loop" type="checkbox" /> Zapętl</label>
+      </section>
+
+      <details class="settings">
+        <summary>Ustawienia</summary>
+        <div class="settings-grid">
+          <label class="field">
+            <span>Palcowanie</span>
+            <select id="system">
+              <option value="german">niemieckie</option>
+              <option value="baroque">barokowe</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Transpozycja</span>
+            <select id="transpose"></select>
+          </label>
+          <label class="check">
+            <input id="octave-up" type="checkbox" checked />
+            Brzmienie fletu sopranowego (oktawę wyżej niż zapis)
+          </label>
+        </div>
+        <p class="hint">
+          Palcowanie różni się tylko dla f¹ i f². Flet niemiecki poznasz po tym, że f¹ gra się
+          czystym chwytem „kciuk + 4 palce” (ostatnie trzy otwory odkryte).
+        </p>
+      </details>
+
+      <div id="message" class="message" role="status" hidden></div>
+
+      <section class="now" aria-live="polite" aria-label="Bieżący chwyt">
+        <div class="now-card">
+          <span class="now-label">Teraz</span>
+          <span id="now-name" class="now-name">–</span>
+          <div id="now-diagram" class="now-diagram"></div>
+        </div>
+        <div class="now-card now-card--next">
+          <span class="now-label">Następna</span>
+          <span id="next-name" class="now-name">–</span>
+          <div id="next-diagram" class="now-diagram"></div>
+        </div>
+      </section>
+
+      <section class="score-card" aria-label="Nuty z chwytami">
+        <div class="song-head">
+          <h2 id="song-title"></h2>
+          <span id="song-meta" class="song-meta"></span>
+        </div>
+        <div class="legend">
+          <span><i class="dot dot--closed"></i> zakryty</span>
+          <span><i class="dot dot--half"></i> w połowie</span>
+          <span><i class="dot dot--q"></i> w 3/4</span>
+          <span><i class="dot"></i> odkryty</span>
+          <span>od góry: kciuk · lewa ręka (3) · prawa ręka (4)</span>
+          <span>Kliknij nutę, żeby ją usłyszeć.</span>
+        </div>
+        <div id="score" class="score"></div>
+      </section>
+
+      <details class="editor">
+        <summary>Edytor nut (ABC) – wpisz lub popraw własną melodię</summary>
+        <textarea id="abc-text" rows="10" spellcheck="false" aria-label="Zapis ABC"></textarea>
+        <div class="editor-actions">
+          <button id="abc-preview" class="button" type="button">Pokaż</button>
+          <button id="abc-save" class="button button--primary" type="button">Zapisz jako mój utwór</button>
+          <a href="https://abcnotation.com/wiki/abc:standard:v2.1" target="_blank" rel="noopener">Opis notacji ABC</a>
+        </div>
+      </details>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

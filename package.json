@@ -1,0 +1,28 @@
+{
+  "name": "flet",
+  "version": "1.0.0",
+  "description": "Nauka gry na flecie prostym: nuty, odtwarzanie i chwyt pod każdą nutą",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "abcjs": "^6.7.2",
+    "fflate": "^0.8.3"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "private": true,
+  "type": "module"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Flet – nauka gry na flecie prostym",
+  "short_name": "Flet",
+  "description": "Nuty, odtwarzanie melodii i chwyt pod każdą nutą.",
+  "lang": "pl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#1f4e9c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

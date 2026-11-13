@@ -1,0 +1,257 @@
+/* Kolory jako zmienne – jasny i ciemny motyw (wg ustawień systemu). */
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --text: #1b1f2a;
+  --muted: #5d6475;
+  --border: #d6dae4;
+  --accent: #1f4e9c;
+  --accent-text: #ffffff;
+  --accent-soft: #e3ebf9;
+  --hole-fill: #1f4e9c;
+  --hole-stroke: #1f4e9c;
+  --flute-body: #eef1f8;
+  --flute-stroke: #9aa6c2;
+  --error: #b42318;
+  --error-soft: #fdecea;
+  --note-active: #d9480f;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151c;
+    --surface: #1b1f29;
+    --text: #e7eaf2;
+    --muted: #9aa2b5;
+    --border: #323849;
+    --accent: #7aa7f2;
+    --accent-text: #0d1424;
+    --accent-soft: #24304a;
+    --hole-fill: #8fb5f5;
+    --hole-stroke: #8fb5f5;
+    --flute-body: #232a3a;
+    --flute-stroke: #56607a;
+    --error: #ff8a7a;
+    --error-soft: #3a1f1c;
+    --note-active: #ff9c5b;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.app-header {
+  padding: 14px 16px 6px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.app-header h1 { margin: 0; font-size: 1.5rem; }
+.app-header h1 span { font-size: 0.95rem; font-weight: 400; color: var(--muted); margin-left: 0.4em; }
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- pasek narzędzi i przyciski */
+.toolbar, .transport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+.toolbar-buttons { display: flex; gap: 8px; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; color: var(--muted); }
+.field.grow { flex: 1 1 260px; }
+.field select, .field input[type="range"] { font: inherit; color: var(--text); }
+select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  min-height: 40px;
+  max-width: 100%;
+}
+.tempo { flex: 1 1 220px; }
+.tempo input { width: 100%; accent-color: var(--accent); }
+.tempo output { color: var(--text); font-variant-numeric: tabular-nums; }
+.check { display: flex; align-items: center; gap: 6px; min-height: 40px; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.button:hover { border-color: var(--accent); }
+.button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.button--primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); min-width: 7.5em; }
+.button--ghost { color: var(--error); }
+.button:disabled { opacity: 0.6; cursor: wait; }
+
+/* ---------- ustawienia, komunikaty, edytor */
+details {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+summary { cursor: pointer; font-weight: 600; }
+.settings-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; align-items: flex-end; }
+.hint { color: var(--muted); font-size: 0.85rem; margin: 10px 0 0; }
+
+.message {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+}
+.message[data-kind="error"] { background: var(--error-soft); color: var(--error); }
+
+.editor textarea {
+  width: 100%;
+  margin-top: 10px;
+  font: 14px/1.4 ui-monospace, "DejaVu Sans Mono", monospace;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+.editor-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+.editor-actions a { color: var(--accent); }
+
+/* ---------- bieżący chwyt (przyklejony u góry podczas przewijania nut) */
+.now {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  padding: 6px 0;
+  background: var(--bg);
+}
+.now-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto 1fr;
+  column-gap: 14px;
+  align-items: start;
+}
+.now-label { grid-column: 1; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.now-name { grid-column: 1; font-size: 2rem; font-weight: 700; color: var(--accent); min-width: 2.5em; }
+.now-diagram { grid-column: 2; grid-row: 1 / span 2; width: 40px; }
+.now-card--next { opacity: 0.75; }
+.now-card--next .now-diagram { width: 30px; }
+.now-card--next .now-name { font-size: 1.5rem; }
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid var(--hole-stroke);
+  vertical-align: -1px;
+}
+.dot--closed { background: var(--hole-fill); }
+.dot--half { background: linear-gradient(90deg, var(--hole-fill) 50%, transparent 50%); }
+.dot--q { background: conic-gradient(transparent 0 25%, var(--hole-fill) 25% 100%); }
+
+/* ---------- nuty + diagramy */
+.score-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 12px 4px;
+}
+.song-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.song-head h2 { margin: 0; font-size: 1.25rem; }
+.song-meta { color: var(--muted); font-size: 0.9rem; }
+.score { overflow: hidden; padding-top: 4px; }
+.score svg { color: var(--text); }
+.score .abcjs-note, .score .abcjs-rest { cursor: pointer; }
+.score .abcjs-note.is-active, .score .abcjs-rest.is-active { fill: var(--note-active); color: var(--note-active); }
+.score .abcjs-note.is-active path { fill: var(--note-active); }
+
+.fingering-row {
+  position: relative;
+  margin-bottom: 18px;
+  --diagram-w: 22px;
+}
+.fingering-cell {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: default;
+}
+.fingering-cell .fingering { width: var(--diagram-w); height: auto; display: block; }
+.note-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.is-rest .note-name, .is-tied .note-name { font-weight: 400; color: var(--muted); font-size: 0.7rem; }
+.fingering-cell.is-active { border-radius: 6px; background: var(--accent-soft); outline: 2px solid var(--note-active); outline-offset: 2px; }
+.fingering-cell.is-active .note-name { color: var(--note-active); }
+.is-out-of-range .note-name { color: var(--error); }
+
+/* diagram chwytu */
+.fingering .flute-body { fill: var(--flute-body); stroke: var(--flute-stroke); stroke-width: 1; }
+.fingering .flute-divider { stroke: var(--flute-stroke); stroke-width: 0.8; stroke-dasharray: 2 2; }
+.fingering .hole { fill: none; stroke: var(--hole-stroke); stroke-width: 1.6; }
+.fingering .hole--closed { fill: var(--hole-fill); }
+.fingering .hole-fill { fill: var(--hole-fill); }
+.fingering .fingering-unknown { fill: var(--error); font: 700 16px system-ui, sans-serif; }
+
+@media (max-width: 520px) {
+  .app-header h1 span { display: block; margin: 0; }
+  .now-card { padding: 6px 12px; flex: 1 1 0; }
+  .now-name { font-size: 1.5rem; }
+  .now-diagram { width: 26px; }
+  .now-card--next .now-diagram { width: 22px; }
+  .now-card--next .now-name { font-size: 1.2rem; }
+  .transport .button { flex: 1 1 auto; }
+}
