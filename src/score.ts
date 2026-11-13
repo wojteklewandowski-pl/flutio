@@ -261,6 +261,20 @@ export class Score {
     this.active = null;
   }
 
+  /** Nuta o danym `startChar`. */
+  noteAt(startChar: number): ScoreNote | undefined {
+    return this.byStartChar.get(startChar);
+  }
+
+  /** Oznaczenie wyniku ćwiczenia pod nutą: zaliczona / z pomyłką. */
+  mark(startChar: number, kind: 'done' | 'mistake'): void {
+    this.byStartChar.get(startChar)?.cell.classList.add(kind === 'done' ? 'is-done' : 'has-mistake');
+  }
+
+  clearMarks(): void {
+    for (const n of this.notes) n.cell.classList.remove('is-done', 'has-mistake');
+  }
+
   /** Następna nuta z dźwiękiem (do podglądu „następny chwyt”). */
   nextSounding(note: ScoreNote): ScoreNote | null {
     const i = this.notes.indexOf(note);

@@ -14,6 +14,8 @@ import { createFingeringSvg } from './fingeringSvg';
 import { polishName } from './pitch';
 import { musicXmlToAbc, extractMxl } from './musicxml';
 import { loadSettings, saveSettings, loadUserSongs, saveUserSongs, type Settings } from './storage';
+import { Microphone, type MicFrame } from './microphone';
+import { PracticeSession, type FrameStatus, type PracticeEvent } from './practice';
 
 function $<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -44,6 +46,14 @@ const ui = {
   abcText: $<HTMLTextAreaElement>('abc-text'),
   abcPreview: $<HTMLButtonElement>('abc-preview'),
   abcSave: $<HTMLButtonElement>('abc-save'),
+  practice: $<HTMLButtonElement>('practice'),
+  practiceCard: $<HTMLDivElement>('practice-card'),
+  practiceProgress: $<HTMLSpanElement>('practice-progress'),
+  heardName: $<HTMLSpanElement>('heard-name'),
+  tunerNeedle: $<HTMLSpanElement>('tuner-needle'),
+  practiceHint: $<HTMLParagraphElement>('practice-hint'),
+  levelBar: $<HTMLSpanElement>('level-bar'),
+  practiceRestart: $<HTMLButtonElement>('practice-restart'),
 };
 
 let settings: Settings = loadSettings();
@@ -51,6 +61,7 @@ let userSongs: Song[] = loadUserSongs();
 
 const score = new Score(ui.score, (tune) => {
   // nuty narysowane od nowa po zmianie szerokości ekranu
+  stopPractice();
   player.setTune(tune);
   showCurrent(null);
 });
@@ -108,6 +119,7 @@ function persist(): void {
 
 /** Wyświetla ABC (utwór z listy albo podgląd z edytora). */
 function showAbc(abc: string): boolean {
+  stopPractice();
   clearMessage();
   try {
     const tune = score.render(abc, {
@@ -193,18 +205,169 @@ function fillDiagram(nameEl: HTMLElement, box: HTMLElement, note: ScoreNote | nu
 function showCurrent(note: ScoreNote | null): void {
   fillDiagram(ui.nowName, ui.nowDiagram, note);
   fillDiagram(ui.nextName, ui.nextDiagram, note ? score.nextSounding(note) : (score.allNotes.find((n) => n.midi !== null) ?? null));
-  if (note && player.currentState === 'playing') {
+  if (note && (player.currentState === 'playing' || practice)) {
     note.cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }
 
 function onNoteClick(note: ScoreNote): void {
   if (player.currentState === 'playing') return;
+  if (practice) {
+    // w trybie ćwiczenia: przejdź do tej nuty i zagraj ją jako podpowiedź
+    const i = practiceTargets.findIndex((t) => t.startChar === note.startChar);
+    if (i >= 0) practice.jumpTo(i);
+    showPracticeTarget();
+  } else {
+    score.highlight(note.startChar);
+    showCurrent(note);
+  }
+  if (note.midi !== null) {
+    player
+      .playSingle(note.midi)
+      // mikrofon usłyszałby głośnik – ignorujemy go na czas podpowiedzi
+      .then((ms) => practice?.muteUntil(performance.now() + ms + 350))
+      .catch((e: unknown) => showMessage(`Błąd dźwięku: ${String(e)}`, 'error'));
+  }
+}
+
+// ------------------------------------------------------------------ ćwiczenie z mikrofonem
+
+const mic = new Microphone();
+let practice: PracticeSession | null = null;
+let practiceTargets: ScoreNote[] = [];
+
+async function startPractice(): Promise<void> {
+  player.stop();
+  practiceTargets = score.allNotes.filter((n) => n.midi !== null && !n.tied);
+  if (!practiceTargets.length) return;
+  const outOfRange = practiceTargets.filter((n) => !fingeringFor(n.midi!, settings.system)).length;
+  if (outOfRange) {
+    showMessage('Ten utwór ma nuty poza zakresem fletu – najpierw ustaw transpozycję.', 'error');
+    return;
+  }
+  ui.practice.disabled = true;
+  try {
+    await mic.start(await player.audioContext(), onMicFrame);
+  } catch (e) {
+    ui.practice.disabled = false;
+    showMessage(e instanceof Error ? e.message : String(e), 'error');
+    return;
+  }
+  clearMessage();
+  score.clearMarks();
+  practice = new PracticeSession(
+    practiceTargets.map((n) => ({ id: n.startChar, writtenMidi: n.midi! })),
+    {},
+    onPracticeEvent,
+  );
+  ui.practice.disabled = false;
+  ui.practice.setAttribute('aria-pressed', 'true');
+  ui.practice.textContent = '■ Zakończ ćwiczenie';
+  ui.play.disabled = true;
+  ui.practiceCard.hidden = false;
+  document.body.classList.add('practicing');
+  showPracticeTarget();
+}
+
+function stopPractice(): void {
+  if (!practice && !mic.running) return;
+  mic.stop();
+  practice = null;
+  ui.practice.setAttribute('aria-pressed', 'false');
+  ui.practice.textContent = '🎤 Ćwicz z mikrofonem';
+  ui.play.disabled = false;
+  ui.practiceCard.hidden = true;
+  document.body.classList.remove('practicing');
+  score.clearHighlight();
+  showCurrent(null);
+}
+
+function restartPractice(): void {
+  if (!practice) return;
+  score.clearMarks();
+  practice = new PracticeSession(
+    practiceTargets.map((n) => ({ id: n.startChar, writtenMidi: n.midi! })),
+    {},
+    onPracticeEvent,
+  );
+  showPracticeTarget();
+}
+
+function showPracticeTarget(): void {
+  if (!practice) return;
+  const i = practice.index;
+  ui.practiceProgress.textContent = progressText(Math.min(i + 1, practiceTargets.length), practice.mistakeCount);
+  const note = practiceTargets[i];
+  if (!note) return;
   score.highlight(note.startChar);
   showCurrent(note);
-  if (note.midi !== null) {
-    player.playSingle(note.midi).catch((e: unknown) => showMessage(`Błąd dźwięku: ${String(e)}`, 'error'));
+  ui.practiceHint.textContent = `Zagraj ${polishName(note.midi!)}.`;
+}
+
+function progressText(position: number, mistakes: number): string {
+  return `nuta ${position}/${practiceTargets.length}` + (mistakes ? ` · ✗ ${mistakes}` : '');
+}
+
+function onPracticeEvent(e: PracticeEvent): void {
+  switch (e.type) {
+    case 'correct':
+      score.mark(e.target.id, 'done');
+      showPracticeTarget();
+      break;
+    case 'mistake':
+      score.mark(e.target.id, 'mistake');
+      if (practice) ui.practiceProgress.textContent = progressText(practice.index + 1, practice.mistakeCount);
+      break;
+    case 'finished': {
+      score.clearHighlight();
+      showCurrent(null);
+      const all = practiceTargets.length;
+      ui.practiceProgress.textContent = `${all} / ${all}`;
+      ui.practiceHint.textContent =
+        e.mistakes === 0
+          ? `Brawo! Cały utwór bez pomyłki (${all} nut).`
+          : `Koniec! Bez pomyłki: ${e.clean} z ${all} nut. Nuty z ✗ warto poćwiczyć.`;
+      break;
+    }
   }
+}
+
+const HINTS: Record<FrameStatus['hint'], string> = {
+  ok: 'Dobrze – trzymaj…',
+  sharp: 'Trochę za wysoko – dmuchnij lżej.',
+  flat: 'Trochę za nisko – dmuchnij mocniej i sprawdź, czy otwory są szczelnie zakryte.',
+  'octave-high': 'O oktawę za wysoko – dmuchnij lżej, spokojniej.',
+  'octave-low': 'O oktawę za nisko – dmuchnij mocniej albo sprawdź kciuk.',
+  'wrong-note': '',
+  silence: '',
+};
+
+function onMicFrame(f: MicFrame): void {
+  if (!practice) return;
+  const st = practice.feed({ time: f.time, midi: f.midi, rms: f.rms });
+  ui.levelBar.style.width = `${Math.min(100, Math.round(f.rms * 400))}%`;
+  if (practice.finished) return;
+
+  const target = practiceTargets[practice.index];
+  const good = st.hint === 'ok' && st.cents !== null;
+  const state = st.playedWrittenMidi === null ? '' : good ? 'ok' : 'bad';
+  ui.heardName.textContent = st.playedWrittenMidi === null ? '–' : polishName(st.playedWrittenMidi);
+  ui.heardName.dataset.state = state;
+  // wskaźnik stroju ma sens tylko w pobliżu właściwego dźwięku (także o oktawę obok)
+  const tunerUseful = st.cents !== null && st.hint !== 'wrong-note';
+  ui.tunerNeedle.dataset.state = tunerUseful ? state : '';
+  if (tunerUseful && st.cents !== null) {
+    const pos = 50 + Math.max(-100, Math.min(100, st.cents)) / 2; // ±100 centów = pełna skala
+    ui.tunerNeedle.style.left = `${pos}%`;
+  }
+
+  let hint: string;
+  if (st.waitingForRelease) hint = 'Rozdziel dźwięki językiem („tu”) albo krótką przerwą.';
+  else if (st.hint === 'silence') hint = target ? `Zagraj ${polishName(target.midi!)}.` : '';
+  else if (st.hint === 'wrong-note' && st.playedWrittenMidi !== null && target)
+    hint = `Grasz ${polishName(st.playedWrittenMidi)}, a potrzebne jest ${polishName(target.midi!)} – spójrz na chwyt.`;
+  else hint = HINTS[st.hint];
+  if (ui.practiceHint.textContent !== hint) ui.practiceHint.textContent = hint;
 }
 
 // ------------------------------------------------------------------ odtwarzanie
@@ -242,6 +405,8 @@ function bind(): void {
   });
 
   ui.play.addEventListener('click', () => void player.togglePlay());
+  ui.practice.addEventListener('click', () => (practice ? stopPractice() : void startPractice()));
+  ui.practiceRestart.addEventListener('click', restartPractice);
   ui.stop.addEventListener('click', () => player.stop());
 
   ui.tempo.addEventListener('input', () => {
@@ -286,7 +451,7 @@ function bind(): void {
     const t = e.target as HTMLElement;
     if (e.code !== 'Space' || t.closest('textarea, input, select, button')) return;
     e.preventDefault();
-    void player.togglePlay();
+    if (!practice) void player.togglePlay();
   });
 }
 

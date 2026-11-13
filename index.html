@@ -38,6 +38,8 @@
           <input id="tempo" type="range" min="0.25" max="1.5" step="0.05" value="1" />
         </label>
         <label class="check"><input id="loop" type="checkbox" /> Zapętl</label>
+        <button id="practice" class="button button--mic" type="button" aria-pressed="false"
+          title="Graj na flecie – aplikacja słucha i przechodzi dalej, gdy zagrasz dobrą nutę">🎤 Ćwicz z mikrofonem</button>
       </section>
 
       <details class="settings">
@@ -78,6 +80,21 @@
           <span id="next-name" class="now-name">–</span>
           <div id="next-diagram" class="now-diagram"></div>
         </div>
+        <div id="practice-card" class="practice-card" hidden>
+          <div class="practice-top">
+            <span class="now-label">Słyszę</span>
+            <span id="practice-progress" class="practice-progress"></span>
+          </div>
+          <span id="heard-name" class="heard-name">–</span>
+          <div class="tuner" aria-hidden="true">
+            <span class="tuner-zone"></span>
+            <span id="tuner-needle" class="tuner-needle"></span>
+          </div>
+          <div class="tuner-scale" aria-hidden="true"><span>za nisko</span><span>za wysoko</span></div>
+          <p id="practice-hint" class="practice-hint" aria-live="polite"></p>
+          <div class="level" title="Głośność z mikrofonu"><span id="level-bar"></span></div>
+          <button id="practice-restart" class="button" type="button">↺ Od początku</button>
+        </div>
       </section>
 
       <section class="score-card" aria-label="Nuty z chwytami">
@@ -92,6 +109,7 @@
           <span><i class="dot"></i> odkryty</span>
           <span>od góry: kciuk · lewa ręka (3) · prawa ręka (4)</span>
           <span>Kliknij nutę, żeby ją usłyszeć.</span>
+          <span class="legend-practice"><i class="mark mark--done"></i> zagrana dobrze <i class="mark mark--mistake"></i> z pomyłką</span>
         </div>
         <div id="score" class="score"></div>
       </section>

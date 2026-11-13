@@ -8,7 +8,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "dev:https": "HTTPS=1 vite",
+    "cert": "mkdir -p .cert && openssl req -x509 -newkey rsa:2048 -nodes -days 825 -subj /CN=flet-dev -keyout .cert/key.pem -out .cert/cert.pem"
   },
   "keywords": [],
   "author": "",

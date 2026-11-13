@@ -7,7 +7,9 @@ Aplikacja w przeglądarce (komputer i telefon) do nauki melodii na **flecie pros
 - **tempo** zmieniasz suwakiem (25–150%), także w trakcie grania,
 - **pod każdą nutą** jest jej nazwa i **rysunek chwytu**,
 - u góry ekranu widać duży chwyt **bieżącej** i **następnej** nuty,
-- kliknięcie w nutę odtwarza jej dźwięk i pokazuje chwyt.
+- kliknięcie w nutę odtwarza jej dźwięk i pokazuje chwyt,
+- **ćwiczenie z mikrofonem**: grasz na flecie, aplikacja słucha, czeka na dobrą nutę
+  i dopiero wtedy przechodzi dalej. Pokazuje, co słyszy, czy dźwięk jest czysty, i oznacza pomyłki.
 
 Chwyty pochodzą z tabeli w podręczniku („Tabela chwytów na flet”, s. 190), od c¹ do c³.
 
@@ -24,6 +26,17 @@ npm run dev        # serwer deweloperski: http://localhost:5173
 
 `npm run dev` udostępnia aplikację w sieci lokalnej. W terminalu pojawi się adres
 typu `Network: http://192.168.1.20:5173`. Otwórz go na telefonie podłączonym do tej samej sieci Wi-Fi.
+
+**Mikrofon na telefonie wymaga https.** Przez zwykły `http://192.168…` przeglądarka nie da
+dostępu do mikrofonu. Wtedy uruchom serwer z szyfrowaniem:
+
+```bash
+npm run cert        # raz: tworzy samopodpisany certyfikat w .cert/ (potrzebny openssl)
+npm run dev:https   # https://192.168.1.20:5173
+```
+
+Telefon ostrzeże o „niezaufanym certyfikacie”. To normalne dla certyfikatu domowego:
+wybierz „Zaawansowane → Przejdź do strony”. Na komputerze (`localhost`) mikrofon działa bez tego.
 
 Żeby **zainstalować aplikację na ekranie głównym** i używać jej **offline**, potrzebny jest
 adres `https://`, bo tego wymagają przeglądarki. Zbuduj wersję produkcyjną i wrzuć katalog `dist/`
@@ -53,7 +66,31 @@ Potem w przeglądarce telefonu: Chrome: menu ⋮ → „Dodaj do ekranu główne
 | Ustawienia → **Palcowanie** | niemieckie (domyślne) lub barokowe; różnią się tylko f¹ i f² |
 | Ustawienia → **Transpozycja** | przesuwa całą melodię o półtony, np. gdy nuty są za nisko lub za wysoko dla fletu |
 | Ustawienia → **Brzmienie fletu sopranowego** | flet sopranowy brzmi oktawę wyżej niż zapis; odznacz, żeby słyszeć wysokość z zapisu |
+| **🎤 Ćwicz z mikrofonem** | tryb ćwiczenia (opis niżej) |
 | **Edytor nut (ABC)** | podgląd i poprawianie zapisu bieżącego utworu, zapis jako własny |
+
+## Ćwiczenie z mikrofonem
+
+1. Wybierz utwór i kliknij **🎤 Ćwicz z mikrofonem**. Przy pierwszym razie przeglądarka zapyta o zgodę na mikrofon.
+2. Podświetlona nuta i duży chwyt u góry pokazują, co zagrać. Zagraj tę nutę i przytrzymaj ją przez chwilę.
+3. Gdy dźwięk jest dobry, nuta dostaje zieloną ramkę i aplikacja przechodzi do następnej. Tempo zależy od ucznia.
+4. Panel **Słyszę** pokazuje:
+   - jaką nutę słyszy aplikacja,
+   - **wskaźnik stroju**: kreska w zielonym polu oznacza czysty dźwięk, w lewo za nisko, w prawo za wysoko,
+   - podpowiedź, np. „O oktawę za wysoko – dmuchnij lżej” albo „Grasz e², a potrzebne jest a¹”.
+5. Zła nuta trzymana przez chwilę to **pomyłka**: pomarańczowa ramka i ✗ pod nutą. Liczy się najwyżej
+   jedna pomyłka na nutę, a potem i tak trzeba zagrać dobrze, żeby pójść dalej.
+6. **Powtórzone nuty** (np. h¹ h¹ h¹) trzeba rozdzielić językiem („tu”) albo krótką przerwą.
+   Jeden długi dźwięk nie zaliczy kilku nut.
+7. Na końcu pojawia się podsumowanie. **↺ Od początku** zaczyna od nowa, a kliknięcie w nutę
+   przenosi do niej i odtwarza ją jako podpowiedź.
+
+Wskazówki:
+- Aplikacja zakłada, że flet jest **sopranowy**, czyli brzmi oktawę wyżej niż zapis.
+- Graj w cichym pokoju, z telefonem lub komputerem ok. 0,5–1 m od fletu.
+- Pasek pod podpowiedzią pokazuje głośność z mikrofonu. Jeśli się nie rusza, mikrofon nie działa
+  albo jest wyciszony.
+- Za dobry uznawany jest dźwięk w granicach ±50 centów (pół półtonu), więc tani szkolny flet też przejdzie.
 
 **Który flet mam: niemiecki czy barokowy?** Zagraj f¹ chwytem niemieckim: kciuk, trzy palce
 lewej ręki i palec wskazujący prawej, a reszta otwarta. Na flecie niemieckim dźwięk jest czysty,

@@ -15,6 +15,9 @@
   --error: #b42318;
   --error-soft: #fdecea;
   --note-active: #d9480f;
+  --ok: #2b8a3e;
+  --ok-soft: #e6f4ea;
+  --warn: #c2410c;
   color-scheme: light;
 }
 
@@ -35,6 +38,9 @@
     --error: #ff8a7a;
     --error-soft: #3a1f1c;
     --note-active: #ff9c5b;
+    --ok: #69db7c;
+    --ok-soft: #1d3324;
+    --warn: #ffa94d;
     color-scheme: dark;
   }
 }
@@ -113,7 +119,8 @@ select {
 .button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .button--primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); min-width: 7.5em; }
 .button--ghost { color: var(--error); }
-.button:disabled { opacity: 0.6; cursor: wait; }
+.button:disabled { opacity: 0.6; cursor: not-allowed; }
+.button--mic[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--accent-text); }
 
 /* ---------- ustawienia, komunikaty, edytor */
 details {
@@ -237,6 +244,47 @@ summary { cursor: pointer; font-weight: 600; }
 .fingering-cell.is-active { border-radius: 6px; background: var(--accent-soft); outline: 2px solid var(--note-active); outline-offset: 2px; }
 .fingering-cell.is-active .note-name { color: var(--note-active); }
 .is-out-of-range .note-name { color: var(--error); }
+.fingering-cell.is-done .fingering .flute-body { fill: var(--ok-soft); stroke: var(--ok); }
+.fingering-cell.is-done .note-name { color: var(--ok); }
+.fingering-cell.has-mistake .note-name { color: var(--warn); }
+.fingering-cell.has-mistake .note-name::after { content: " ✗"; }
+.fingering-cell.is-done.has-mistake .fingering .flute-body { fill: var(--flute-body); stroke: var(--warn); }
+
+/* ---------- tryb ćwiczenia z mikrofonem */
+.practice-card {
+  flex: 1 1 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.practice-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0 8px; }
+.practice-progress { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.heard-name { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.heard-name[data-state="ok"] { color: var(--ok); }
+.heard-name[data-state="bad"] { color: var(--warn); }
+.tuner { position: relative; height: 14px; border-radius: 7px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; }
+.tuner-zone { position: absolute; left: 25%; width: 50%; top: 0; bottom: 0; background: var(--ok-soft); }
+.tuner-needle {
+  position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; left: 50%;
+  background: var(--muted); border-radius: 2px; transition: left 80ms linear; opacity: 0;
+}
+.tuner-needle[data-state="ok"] { background: var(--ok); opacity: 1; }
+.tuner-needle[data-state="bad"] { background: var(--warn); opacity: 1; }
+.tuner-scale { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); }
+.practice-hint { margin: 2px 0; min-height: 2.6em; font-size: 0.95rem; }
+.level { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+.level span { display: block; height: 100%; width: 0; background: var(--accent); }
+.practice-card .button { align-self: flex-start; min-height: 34px; padding: 4px 10px; }
+.legend-practice { display: none; }
+.practicing .legend-practice { display: inline; }
+.mark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; border: 1.5px solid; }
+.mark--done { border-color: var(--ok); background: var(--ok-soft); }
+.mark--mistake { border-color: var(--warn); margin-left: 8px; }
 
 /* diagram chwytu */
 .fingering .flute-body { fill: var(--flute-body); stroke: var(--flute-stroke); stroke-width: 1; }
@@ -246,8 +294,17 @@ summary { cursor: pointer; font-weight: 600; }
 .fingering .hole-fill { fill: var(--hole-fill); }
 .fingering .fingering-unknown { fill: var(--error); font: 700 16px system-ui, sans-serif; }
 
+/* w trakcie ćwiczenia na telefonie: zamiast „Następna” pokazujemy panel słuchania */
+@media (max-width: 700px) {
+  .now { flex-wrap: wrap; }
+  .practicing .now-card--next { display: none; }
+  .practice-card { flex-basis: 0; }
+}
+
 @media (max-width: 520px) {
   .app-header h1 span { display: block; margin: 0; }
+  .heard-name { font-size: 1.3rem; }
+  .practice-hint { font-size: 0.85rem; }
   .now-card { padding: 6px 12px; flex: 1 1 0; }
   .now-name { font-size: 1.5rem; }
   .now-diagram { width: 26px; }

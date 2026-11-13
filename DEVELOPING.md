@@ -10,6 +10,8 @@
 | **abcjs** do nut i dźwięku | jedna biblioteka: render SVG, syntezator Web Audio z próbkami SoundFont, zdarzenia „teraz gra nuta X” |
 | **Własny konwerter MusicXML → ABC** | gotowy xml2abc nie jest w npm; dla melodii na flet wystarcza ~200 linii z testami |
 | **localStorage** dla własnych utworów | utwory to krótkie teksty; IndexedDB byłby przerostem formy |
+| **Własny YIN** do wykrywania wysokości | ~100 linii, testowalny na sygnałach syntetycznych; flet daje prawie sinusoidę, więc nie potrzeba bibliotek ML (CREPE itp.) |
+| **HTTPS w dev przez openssl**, bez wtyczki | mikrofon na telefonie wymaga bezpiecznego kontekstu; `npm run cert` + `npm run dev:https` nie dokładają zależności |
 
 ### Zależności
 
@@ -55,6 +57,9 @@ src/
   musicxml.ts           MusicXML / .mxl → ABC
   songs.ts              ★ WBUDOWANE UTWORY (ABC)
   storage.ts            localStorage: własne utwory i ustawienia
+  pitchDetect.ts        wykrywanie wysokości dźwięku (YIN) – czysta funkcja
+  microphone.ts         mikrofon: getUserMedia → AnalyserNode → detectPitch, ~60 ramek/s
+  practice.ts           sesja ćwiczenia: maszyna stanów (zaliczenie, pomyłki, powtórzone nuty)
   style.css             wygląd; kolory jako zmienne CSS (jasny i ciemny motyw)
 public/
   sw.js                 service worker (offline: aplikacja + próbki dźwięku)
@@ -93,6 +98,38 @@ tests/                  testy vitest (*.test.ts)
 - **Brzmienie oktawę wyżej** (`midiTranspose: 12`) zmienia tylko dźwięk; chwyty są liczone z zapisu,
   jak w podręczniku.
 
+### Ćwiczenie z mikrofonem (`pitchDetect.ts`, `microphone.ts`, `practice.ts`)
+
+```
+mikrofon ─getUserMedia─▶ AnalyserNode (1024 próbki ≈ 21 ms)
+   └─ rAF ~60/s ─▶ detectPitch (YIN) ─▶ Hz → MIDI ─▶ mediana z 3 ramek
+        └─▶ PracticeSession.feed({time, midi, rms}) ─▶ FrameStatus (UI) + zdarzenia correct/mistake/finished
+```
+
+- **YIN** (`detectPitch`): funkcja różnicowa → skumulowana normalizacja → pierwsze minimum pod
+  progiem 0,15 → interpolacja paraboliczna. Zakres 240–2600 Hz (flet sopranowy brzmi
+  523–2093 Hz). Ramka poniżej RMS 0,01 to cisza. Ramka bez minimum pod progiem (szum, sam oddech)
+  daje `null`. Dokładność na sygnałach testowych: < 5 centów.
+- **Ustawienia mikrofonu**: `echoCancellation`, `noiseSuppression` i `autoGainControl` wyłączone,
+  bo filtry mowy tłumią ciągły ton. Mikrofon nie jest podłączony do głośników, więc nie ma sprzężenia.
+- **`PracticeSession`** (czysta logika, testy w `tests/practice.test.ts`):
+  - oczekiwana wysokość brzmiąca = zapis + 12;
+  - zaliczenie: ≥ 150 ms (`holdMs`) w granicach ±50 centów (`toleranceCents`);
+  - po zaliczeniu trzeba się **zwolnić**: cisza, spadek RMS poniżej 40% szczytu (artykulacja „tu”)
+    albo zmiana wysokości. Dzięki temu powtórzone nuty liczą się osobno;
+  - pomyłka: stabilny zły dźwięk ≥ 150 ms, najwyżej jedna na nutę. Lekko nieczysty dźwięk (< 1 półton)
+    nie jest pomyłką, tylko podpowiedzią „za wysoko/za nisko”. Dźwięk o oktawę obok daje
+    podpowiedź `octave-high/low`;
+  - `muteUntil()`: na czas odtwarzania podpowiedzi (kliknięcie w nutę) mikrofon jest ignorowany,
+    bo słyszałby głośnik.
+- **Test od początku do końca bez fletu**: Chrome przyjmuje plik WAV jako mikrofon:
+  ```bash
+  google-chrome --use-fake-ui-for-media-stream --use-fake-device-for-media-stream \
+                --use-file-for-fake-audio-capture=/ścieżka/melodia.wav http://localhost:5173
+  ```
+  WAV z tonami melodii (zapis + 12 półtonów, przerwy ~70 ms między nutami) przechodzi cały utwór.
+  W ten sposób sprawdzono „Aidę”: 28/28 nut i poprawnie wykrytą wstawioną pomyłkę.
+
 ### Konwersja MusicXML (`musicxml.ts`)
 
 Bierze pierwszą `<part>` i pierwszy `<voice>`, pomija `<chord/>`, `<grace/>`, `<backup>`.
@@ -121,7 +158,9 @@ zapamiętywane jako ostatnio wybrany utwór.
 
 ## Testy
 
-- **Jednostkowe** (`npm test`): tabela chwytów, nazwy dźwięków, konwerter MusicXML (w tym `.mxl`).
+- **Jednostkowe** (`npm test`): tabela chwytów, nazwy dźwięków, konwerter MusicXML (w tym `.mxl`),
+  detektor wysokości (sinusy w całym zakresie fletu, alikwoty, szum, cisza, 44,1/48 kHz),
+  sesja ćwiczenia (zaliczanie, powtórzone nuty, pomyłki, podpowiedzi, wyciszenie).
 - **Ręcznie w przeglądarce**, bo render SVG i dźwięk wymagają prawdziwej przeglądarki. Sprawdź:
   1. Każdy wbudowany utwór: chwyty pod nutami, brak „?”.
   2. Graj → podświetla się kolejna nuta, panel „Teraz/Następna” nadąża, na telefonie przewija się widok.
@@ -129,6 +168,7 @@ zapamiętywane jako ostatnio wybrany utwór.
   4. Palcowanie barokowe zmienia tylko f¹ i f² (utwór „Wlazł kotek”).
   5. Wgranie `.mxl` z MuseScore; zapis z edytora ABC; usunięcie własnego utworu.
   6. Szerokość 390 px (DevTools → tryb urządzenia): bez poziomego przewijania.
+  7. Ćwiczenie z mikrofonem: z prawdziwym fletem albo z plikiem WAV (patrz wyżej); na telefonie przez `dev:https`.
 
 ## Wdrożenie
 
@@ -140,5 +180,7 @@ wrzucić do dowolnego katalogu na serwerze https. Po zmianach w `public/sw.js` p
 
 - Rozpoznawanie nut ze zdjęcia (OMR): poza zakresem; obejście przez MuseScore lub Audiveris → MusicXML.
 - Tylko flet sopranowy C. Flet altowy (F) wymagałby drugiej tabeli i transpozycji chwytów.
+- Mikrofon ocenia **wysokość**, nie rytm. Tryb ćwiczenia czeka na ucznia.
 - Pomysły: odliczanie / metronom przed startem, ćwiczenie fragmentu (zakres taktów w pętli),
-  **mikrofon**: wykrywanie wysokości dźwięku i tryb „czekaj, aż zagram dobrze”.
+  ocena gry **razem z odtwarzaniem** (rytm + wysokość), statystyki najczęściej mylonych nut,
+  regulacja tolerancji stroju w ustawieniach.

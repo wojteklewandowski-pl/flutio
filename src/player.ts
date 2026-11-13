@@ -121,10 +121,13 @@ export class Player {
     this.setState('idle');
   }
 
-  /** Zagraj pojedynczy dźwięk (kliknięcie w nutę). `midi` – wysokość z zapisu. */
-  async playSingle(midi: number): Promise<void> {
-    if (!this.tune) return;
-    await this.ensureContext();
+  /**
+   * Zagraj pojedynczy dźwięk (kliknięcie w nutę). `midi` – wysokość z zapisu.
+   * Zwraca czas trwania w ms (żeby tryb ćwiczenia mógł na ten czas wyciszyć mikrofon).
+   */
+  async playSingle(midi: number): Promise<number> {
+    if (!this.tune) return 0;
+    await this.audioContext();
     const pitch = midi + (this.settings.octaveUp ? 12 : 0);
     const msPerMeasure = this.tune.millisecondsPerMeasure(this.currentBpm());
     // czas trwania w ułamku taktu: ćwierćnuta
@@ -133,6 +136,7 @@ export class Player {
       [],
       msPerMeasure,
     );
+    return msPerMeasure * 0.25;
   }
 
   // ---------------------------------------------------------------- wewnętrzne
@@ -141,7 +145,8 @@ export class Player {
     return `${this.settings.tempoFactor}|${this.settings.octaveUp}`;
   }
 
-  private async ensureContext(): Promise<AudioContext> {
+  /** Wspólny AudioContext (tworzony przy pierwszym geście użytkownika); używa go też mikrofon. */
+  async audioContext(): Promise<AudioContext> {
     if (!this.ctx) {
       this.ctx = new AudioContext();
       // abcjs używa globalnego kontekstu przy playEvent
@@ -155,7 +160,7 @@ export class Player {
     if (!this.tune) return;
     if (this.synth && this.timer && this.primedFor === this.settingsKey()) return;
     this.setState('loading');
-    const audioContext = await this.ensureContext();
+    const audioContext = await this.audioContext();
     const tune = this.tune;
     const bpm = this.currentBpm();
 
